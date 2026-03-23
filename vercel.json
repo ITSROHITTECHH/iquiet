@@ -1,6 +1,0 @@
-{
-  "routes": [
-    { "src": "^/$", "dest": "/templates/index.html" },
-    { "src": "^/chat$", "dest": "/templates/chat.html" }
-  ]
-}
