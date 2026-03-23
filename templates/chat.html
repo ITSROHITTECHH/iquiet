@@ -492,7 +492,7 @@
         <div class="avatar-ring-2"></div>
         <div class="avatar-ring"></div>
         {% load static %}
-        <img id="avatar" src="{% static '../images/girls.png' %}" alt="AI">
+        <img id="avatar" src="{% static 'static/images/girls.png' %}" alt="AI">
       </div>
       <p id="aiName">iQuiet Companion</p>
       <span class="status-dot">Listening</span>
@@ -729,14 +729,14 @@ function selectCompanion(type){
 
   if(type==="boy"){
     // 👦 user male → 👩 AI female
-    avatar.src="../girls.png"
+    avatar.src="static/images/girls.png"
     name.innerText="iQuiet (Female Companion)"
     selectedVoiceType = "female"
   }
 
   if(type==="girl"){
     // 👧 user female → 👦 AI male
-    avatar.src="../boys.png"
+    avatar.src="static/images/boys.png"
     name.innerText="iQuiet (Male Companion)"
     selectedVoiceType = "male"
   }
