@@ -215,43 +215,8 @@ The interface is minimal by choice. Silence is designed in. The goal was never t
  
 <br/>
  
----
- 
-<br/>
- 
-## 🚀 What's Coming Next
- 
-| Feature | Status |
-|---------|--------|
-| 🎵 Mood-based background music | Planned |
-| 📝 Emotion-based shayari & quotes | Planned |
-| 📊 Real-time mood detection | In Design |
-| 🌐 Multi-language support | Planned |
-| 💾 Persistent memory (database) | Planned |
- 
-<br/>
- 
----
- 
-<br/>
- 
-## 🚀 Getting Started
- 
-```bash
-# Clone the repo
-git clone https://github.com/yourusername/iQuiet.git
- 
-# Navigate to project
-cd iQuiet
- 
-# Open in browser (no build step needed)
-open index.html
-```
- 
-> Connect your backend API at the endpoint in `script.js` and you're live.
- 
-<br/>
- 
+
+
 ---
  
 <br/>
