@@ -251,6 +251,12 @@ It demonstrates:
 - ✅ Security awareness from day one
  
 <br/>
+
+---
+
+<br/>
+
+I’ve been working on this project for quite a while, building and refining it in VS Code—and I’m finally excited to share that it’s complete and ready to present directly to all of you 🚀
  
 ---
  
