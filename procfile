@@ -1,1 +1,1 @@
-web: gunicorn iquiet.wsgi
+web: gunicorn iquiet.wsgi 
