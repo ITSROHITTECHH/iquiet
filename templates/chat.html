@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>iQuiet Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --bg: #080a0e;
+    --surface: #0d1018;
+    --surface-2: #111520;
+    --border: rgba(160, 180, 220, 0.08);
+    --border-hover: rgba(160, 180, 220, 0.18);
+    --text-primary: #d8dde8;
+    --text-muted: #5a6070;
+    --text-soft: #8892a4;
+    --accent: #a0b4d6;
+    --accent-glow: rgba(140, 160, 220, 0.15);
+    --user-color: #a0c4d6;
+    --user-bg: rgba(100, 150, 200, 0.1);
+    --ai-bg: rgba(160, 180, 220, 0.05);
+  }
+
+  *, *::before, *::after {
+    margin: 0; padding: 0; box-sizing: border-box;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    overflow: hidden;
+  }
+
+  /* ── Grain overlay ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    background-size: 128px 128px;
+    opacity: 0.03;
+    pointer-events: none;
+  }
+
+  /* ── Nebula background ── */
+  #canvas-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── Full layout ── */
+  .layout {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    height: 100vh;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 20px;
+    gap: 24px;
+  }
+
+  /* ── LEFT PANEL ── */
+  .left-panel {
+    width: 260px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    animation: rise 1s ease 0.1s both;
+  }
+
+  /* Wordmark */
+  .wordmark {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: 0.18em;
+    color: var(--text-primary);
+  }
+  .wordmark i {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  /* Avatar card */
+  .avatar-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px 20px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .avatar-card::before {
+    content: '';
+    position: absolute;
+    top: -40px; left: 50%;
+    transform: translateX(-50%);
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: var(--accent-glow);
+    filter: blur(40px);
+    pointer-events: none;
+  }
+
+  .avatar-wrap {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    margin: 0 auto 16px;
+  }
+
+  .avatar-wrap img {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid var(--border-hover);
+    transition: box-shadow 0.6s ease;
+  }
+
+  .avatar-ring {
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid rgba(160, 180, 220, 0.15);
+    animation: ring-pulse 4s ease-in-out infinite;
+  }
+
+  .avatar-ring-2 {
+    position: absolute;
+    inset: -14px;
+    border-radius: 50%;
+    border: 1px solid rgba(160, 180, 220, 0.07);
+    animation: ring-pulse 4s ease-in-out infinite 1.2s;
+  }
+
+  @keyframes ring-pulse {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.03); }
+  }
+
+  #aiName {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--text-primary);
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+
+  .status-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .status-dot::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #5a9a7a;
+    box-shadow: 0 0 6px rgba(90, 154, 122, 0.6);
+    animation: blink 2.5s ease-in-out infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Companion selector */
+  .companion-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+  }
+
+  .companion-select {
+    display: flex;
+    gap: 10px;
+  }
+
+  .companion-select button {
+    flex: 1;
+    padding: 10px 0;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 30px;
+    color: var(--text-soft);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.3s, color 0.3s, background 0.3s;
+  }
+
+  .companion-select button:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: var(--accent-glow);
+  }
+
+  /* Info note */
+  .info-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    border-left: 1px solid var(--border);
+    padding-left: 14px;
+  }
+
+  /* ── RIGHT PANEL — CHAT ── */
+  .right-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    animation: rise 1s ease 0.25s both;
+    min-width: 0;
+  }
+
+  /* Chat header */
+  .chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 4px 18px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+
+  .chat-header-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 15px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+  }
+
+  .chat-header-line {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .chat-header-line::before {
+    content: '';
+    width: 20px; height: 1px;
+    background: var(--border-hover);
+  }
+
+  /* Chat box */
+  .chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(160,180,220,0.1) transparent;
+  }
+
+  .chat-box::-webkit-scrollbar {
+    width: 4px;
+  }
+  .chat-box::-webkit-scrollbar-track { background: transparent; }
+  .chat-box::-webkit-scrollbar-thumb {
+    background: rgba(160, 180, 220, 0.12);
+    border-radius: 4px;
+  }
+
+  /* Messages */
+  .message {
+    display: flex;
+    flex-direction: column;
+    max-width: 78%;
+    animation: msg-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  @keyframes msg-in {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user {
+    align-self: flex-end;
+    align-items: flex-end;
+  }
+
+  .message.ai {
+    align-self: flex-start;
+    align-items: flex-start;
+  }
+
+  .msg-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    padding: 0 4px;
+  }
+
+  .msg-bubble {
+    padding: 13px 18px;
+    border-radius: 18px;
+    line-height: 1.65;
+    font-size: 14.5px;
+  }
+
+  .message.user .msg-bubble {
+    background: var(--user-bg);
+    border: 1px solid rgba(100, 150, 200, 0.18);
+    border-bottom-right-radius: 4px;
+    color: var(--user-color);
+  }
+
+  .message.ai .msg-bubble {
+    background: var(--ai-bg);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    color: var(--text-primary);
+  }
+
+  /* Typing indicator */
+  #typing {
+    display: none;
+    align-self: flex-start;
+    padding: 12px 18px;
+    background: var(--ai-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    border-bottom-left-radius: 4px;
+    gap: 5px;
+    align-items: center;
+  }
+
+  #typing.show {
+    display: flex;
+  }
+
+  .typing-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: typing-bounce 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes typing-bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-5px); opacity: 1; }
+  }
+
+  /* ── Input area ── */
+  .input-area {
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .input-area input {
+    flex: 1;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 40px;
+    color: var(--text-primary);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    outline: none;
+    transition: border-color 0.3s, background 0.3s;
+  }
+
+  .input-area input::placeholder {
+    color: var(--text-muted);
+    font-style: italic;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 15px;
+  }
+
+  .input-area input:focus {
+    border-color: var(--border-hover);
+    background: var(--surface-2);
+  }
+
+  .icon-btn {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-soft);
+    font-size: 17px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.3s, color 0.3s, background 0.3s;
+    flex-shrink: 0;
+  }
+
+  .icon-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-primary);
+    background: var(--accent-glow);
+  }
+
+  .send-btn {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: rgba(160, 180, 220, 0.1);
+    border: 1px solid rgba(160, 180, 220, 0.25);
+    color: var(--accent);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s, border-color 0.3s, transform 0.2s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover {
+    background: rgba(160, 180, 220, 0.2);
+    border-color: var(--accent);
+    transform: scale(1.06);
+  }
+
+  .send-btn:active { transform: scale(0.95); }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 700px) {
+    .layout { flex-direction: column; padding: 16px; gap: 16px; overflow-y: auto; }
+    .left-panel { width: 100%; flex-direction: row; flex-wrap: wrap; }
+    .avatar-card { flex: 1; min-width: 180px; }
+    .right-panel { min-height: 400px; }
+    html, body { overflow: auto; }
+  }
+</style>
+</head>
+
+<body>
+
+<canvas id="canvas-bg"></canvas>
+
+<div class="layout">
+
+  <!-- LEFT PANEL -->
+  <div class="left-panel">
+
+    <div class="wordmark"><i>i</i>Quiet</div>
+
+    <div class="avatar-card">
+      <div class="avatar-wrap">
+        <div class="avatar-ring-2"></div>
+        <div class="avatar-ring"></div>
+        {% load static %}
+        <img id="avatar" src="{% static 'images/girls.png' %}" alt="AI">
+      </div>
+      <p id="aiName">iQuiet Companion</p>
+      <span class="status-dot">Listening</span>
+    </div>
+
+    <div>
+      <p class="companion-label">Choose companion</p>
+      <div class="companion-select">
+        <button onclick="selectCompanion('girl')">Female</button>
+        <button onclick="selectCompanion('boy')">Male</button>
+      </div>
+    </div>
+
+    <p class="info-note">
+      This is a safe space. Say whatever you feel — no judgment, just presence.
+    </p>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+
+    <div class="chat-header">
+      <span class="chat-header-title">Your conversation</span>
+      <span class="chat-header-line">Safe · Private</span>
+    </div>
+
+    <div class="chat-box" id="chatBox">
+      <div class="message ai">
+        <span class="msg-label">iQuiet</span>
+        <div class="msg-bubble">Hello… I'm here if you want to talk.</div>
+      </div>
+    </div>
+
+    <div id="typing">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Say something…" onkeydown="if(event.key==='Enter') sendMessage()">
+      <button class="icon-btn" onclick="startListening()" title="Voice input">🎤</button>
+      <button class="send-btn" onclick="sendMessage()" title="Send">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+
+  // ── Nebula canvas background ──
+  const canvas = document.getElementById('canvas-bg');
+  const ctx = canvas.getContext('2d');
+  function resize() { canvas.width = innerWidth; canvas.height = innerHeight; }
+  resize(); addEventListener('resize', resize);
+  const bgOrbs = [
+    { x: 0.1,  y: 0.2,  r: 0.4,  c: [70, 100, 160],  s: 0.0003 },
+    { x: 0.8,  y: 0.7,  r: 0.35, c: [90, 70, 140],   s: 0.0004 },
+    { x: 0.5,  y: 0.9,  r: 0.25, c: [60, 90, 130],   s: 0.0005 },
+  ];
+  let t = 0;
+  (function drawBg() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#080a0e'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    bgOrbs.forEach((o, i) => {
+      const ox = (o.x + Math.sin(t * o.s * 1000 + i) * 0.05) * canvas.width;
+      const oy = (o.y + Math.cos(t * o.s * 800  + i) * 0.05) * canvas.height;
+      const r  = o.r * Math.min(canvas.width, canvas.height);
+      const g  = ctx.createRadialGradient(ox, oy, 0, ox, oy, r);
+      g.addColorStop(0,   `rgba(${o.c[0]},${o.c[1]},${o.c[2]},0.08)`);
+      g.addColorStop(0.5, `rgba(${o.c[0]},${o.c[1]},${o.c[2]},0.03)`);
+      g.addColorStop(1,   `rgba(${o.c[0]},${o.c[1]},${o.c[2]},0)`);
+      ctx.beginPath(); ctx.arc(ox, oy, r, 0, Math.PI * 2);
+      ctx.fillStyle = g; ctx.fill();
+    });
+    t += 16; requestAnimationFrame(drawBg);
+  })();
+
+  const chatBox = document.getElementById('chatBox');
+
+  //  SAFE TEXT (XSS FIX)
+  function escapeHTML(str) {
+    return str.replace(/[&<>"']/g, function (match) {
+      return {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[match];
+    });
+  }
+
+  function appendMessage(role, text) {
+    const wrap = document.createElement('div');
+    wrap.className = `message ${role}`;
+    wrap.innerHTML = `
+      <span class="msg-label">${role === 'user' ? 'You' : 'iQuiet'}</span>
+      <div class="msg-bubble">${escapeHTML(text)}</div>
+    `;
+    chatBox.appendChild(wrap);
+    chatBox.scrollTop = chatBox.scrollHeight;
+  }
+
+  // 🎯 track selected type
+  let selectedVoiceType = "female"
+
+  // 🧠 chat memory
+  let chatHistory = []
+
+  // ⏳ last active
+  let lastActiveTime = Date.now()
+
+  // 🎯 voices store
+  let allVoices = []
+
+  function loadVoices(){
+    allVoices = window.speechSynthesis.getVoices()
+  }
+  window.speechSynthesis.onvoiceschanged = loadVoices
+  window.onload = loadVoices   // ✅ FIX
+
+
+  // ================== SEND MESSAGE ==================
+  async function sendMessage(){
+
+    let input = document.getElementById("userInput")
+    let typing = document.getElementById("typing")
+
+    let message = input.value
+
+    if(message==="") return
+
+    lastActiveTime = Date.now()
+    localStorage.setItem("lastActive", lastActiveTime)
+
+    appendMessage('user', message)
+
+    input.value=""
+
+    typing.classList.add('show')
+    chatBox.scrollTop = chatBox.scrollHeight
+
+    try {
+
+      let response = await fetch("/chat-api/",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ message: message, history: chatHistory })
+      })
+
+      let data = await response.json()
+
+      appendMessage('ai', data.reply)
+
+      chatHistory.push({ user: message, ai: data.reply })
+
+      speak(data.reply)
+
+    } catch (error) {
+
+      appendMessage('ai', "Something went wrong… I'm still here.")
+
+    }
+
+    typing.classList.remove('show')
+
+    // avatar glow
+    document.getElementById("avatar").style.boxShadow="0 0 30px rgba(140,180,220,0.5)"
+    setTimeout(()=>{
+      document.getElementById("avatar").style.boxShadow=""
+    },1500)
+  }
+
+
+  // ================== VOICE ==================
+  function speak(text){
+
+    let speech = new SpeechSynthesisUtterance(text)
+    let selectedVoice = allVoices[0]
+
+    for(let voice of allVoices){
+      let name = voice.name.toLowerCase()
+      if(selectedVoiceType === "female" && (name.includes("zira") || name.includes("female") || name.includes("samantha"))){
+        selectedVoice = voice; break
+      }
+      if(selectedVoiceType === "male" && (name.includes("david") || name.includes("male") || name.includes("mark"))){
+        selectedVoice = voice; break
+      }
+    }
+
+    speech.voice = selectedVoice
+    speech.lang = "en-US"
+    speech.rate = 1
+    speech.pitch = 1
+
+    window.speechSynthesis.cancel()
+    window.speechSynthesis.speak(speech)
+  }
+
+
+  // ================== MIC INPUT ==================
+  function startListening(){
+
+    let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)()
+    recognition.lang = "en-US"
+    recognition.interimResults = false
+    recognition.start()
+
+    recognition.onstart = () => { console.log("🎤 Listening...") }
+
+    recognition.onresult = (event) => {
+      let transcript = event.results[0][0].transcript
+      document.getElementById("userInput").value = transcript
+      sendMessage()
+    }
+
+    recognition.onerror = (event) => { console.log("Mic Error:", event.error) }
+  }
+
+
+  // ================== COMPANION ==================
+function selectCompanion(type){
+
+  let avatar = document.getElementById("avatar")
+  let name = document.getElementById("aiName")
+
+  if(type==="boy"){
+    // 👦 user male → 👩 AI female
+    avatar.src="/static/images/girls.png"
+    name.innerText="iQuiet (Female Companion)"
+    selectedVoiceType = "female"
+  }
+
+  if(type==="girl"){
+    // 👧 user female → 👦 AI male
+    avatar.src="/static/images/boys.png"
+    name.innerText="iQuiet (Male Companion)"
+    selectedVoiceType = "male"
+  }
+}
+
+
+  // ================== INACTIVITY CHECK ==================
+  function checkInactivity(){
+
+    let last = localStorage.getItem("lastActive")
+    if(!last) return
+
+    let diff = Date.now() - last
+
+    if(diff > 172800000){
+      let message = "It's been a while… are you okay?"
+      appendMessage('ai', message)
+      speak(message)
+    }
+  }
+
+  checkInactivity()
+
+</script>
+
+</body>
+</html>
