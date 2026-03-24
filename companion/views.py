@@ -30,7 +30,7 @@ def chat(request):
 
 def get_ai_reply(message, history):
     try:
-        api_key = os.environ.get("OPENAI_API_KEY")
+        api_key = os.environ.get("OPENROUTER_API_KEY")
 
         if not api_key:
             return "API key not configured 🚫"
