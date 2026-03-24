@@ -29,7 +29,7 @@ DEBUG = False
 
 
 # ALLOWED_HOSTS = []
-ALLOWED_HOSTS = ["https://iquiet-production.up.railway.app"]
+ALLOWED_HOSTS = ["iquiet-production.up.railway.app"]
 
 
 # Application definition
@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'iquiet.urls'
 
@@ -136,4 +137,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+
 CORS_ALLOW_ALL_ORIGINS = True
+
+CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
