@@ -6,14 +6,15 @@ import json
 import os
 from openai import OpenAI
 
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.environ.get("OPENAI_API_KEY"),
-    default_headers={
-        "HTTP-Referer": "https://iquiet-production.up.railway.app",
-        "X-Title": "iQuiet"
-    }
-)
+# client = OpenAI(
+#     base_url="https://openrouter.ai/api/v1",
+#     api_key=os.environ.get("OPENAI_API_KEY"),
+#     default_headers={
+#         "HTTP-Referer": "https://iquiet-production.up.railway.app",
+#         "X-Title": "iQuiet"
+
+#     }
+# )  
 
 
 
@@ -29,6 +30,20 @@ def chat(request):
 
 def get_ai_reply(message, history):
     try:
+        api_key = os.environ.get("OPENAI_API_KEY")
+
+        if not api_key:
+            return "API key not configured 🚫"
+
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+            default_headers={
+                "HTTP-Referer": "https://iquiet-production.up.railway.app",
+                "X-Title": "iQuiet"
+            }
+        )
+
         messages = [
             {
                 "role": "system",
@@ -43,7 +58,7 @@ def get_ai_reply(message, history):
         messages.append({"role": "user", "content": message})
 
         response = client.chat.completions.create(
-            model="openai/gpt-3.5-turbo",  # ⚠️ change model
+            model="openai/gpt-4o-mini",
             messages=messages
         )
 
@@ -52,6 +67,34 @@ def get_ai_reply(message, history):
     except Exception as e:
         print("ERROR:", e)
         return f"Error: {str(e)}"
+
+
+
+# def get_ai_reply(message, history):
+#     try:
+#         messages = [
+#             {
+#                 "role": "system",
+#                 "content": "You are a calm and emotionally supportive AI companion."
+#             }
+#         ]
+
+#         for chat in history:
+#             messages.append({"role": "user", "content": chat["user"]})
+#             messages.append({"role": "assistant", "content": chat["ai"]})
+
+#         messages.append({"role": "user", "content": message})
+
+#         response = client.chat.completions.create(
+#             model="openai/gpt-3.5-turbo",  # ⚠️ change model
+#             messages=messages
+#         )
+
+#         return response.choices[0].message.content
+
+#     except Exception as e:
+#         print("ERROR:", e)
+#         return f"Error: {str(e)}"
 
 
 
