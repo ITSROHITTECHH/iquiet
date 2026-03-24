@@ -645,7 +645,7 @@
 
     try {
 
-      let response = await fetch("/chat-api/",{
+      let response = await fetch("https://iquiet-production.up.railway.app/chat-api/",{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({ message: message, history: chatHistory })
