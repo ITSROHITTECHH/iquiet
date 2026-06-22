@@ -1,5 +1,3 @@
-
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -648,7 +646,11 @@
 
     try {
 
-      let response = await fetch("https://iquiet-production.up.railway.app/chat-api/",{
+      let response = await fetch("/chat-api/", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ message: message, history: chatHistory })
+}),{
         method:"POST",
         headers:{"Content-Type":"application/json"},
         body:JSON.stringify({ message: message, history: chatHistory })
