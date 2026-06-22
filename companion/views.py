@@ -40,9 +40,9 @@ def get_ai_reply(message, history):
             base_url="https://openrouter.ai/api/v1",
             api_key=api_key,
             default_headers={
-                "HTTP-Referer": "https://iquiet-production.up.railway.app",
-                "X-Title": "iQuiet"
-            }
+                             "HTTP-Referer": "https://iquiet.vercel.app",
+                             "X-Title": "iQuiet"
+                        }
         )
 
         messages = [
