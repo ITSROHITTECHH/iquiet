@@ -131,7 +131,18 @@ STATICFILES_DIRS = [
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+# NOTE: the old STATICFILES_STORAGE setting was removed in Django 5.1+, so it was
+# silently ignored. STORAGES is the current way. The non-manifest variant is used
+# on purpose: the manifest variant needs `collectstatic` to have run at build time
+# and raises a 500 on any missing entry (which is what happens on Vercel).
+STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
+}
+
+# Serve /static/... (avatars etc.) straight from the app, even if collectstatic
+# was not run on the server. Vercel does not serve /static itself for a Python build.
+WHITENOISE_USE_FINDERS = True
 
 
 
